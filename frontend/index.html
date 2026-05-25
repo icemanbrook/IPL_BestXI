@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPL 2026 — Playing XI Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0b0e14;
+      --surface:   #13171f;
+      --card:      #1a1f2b;
+      --border:    #252b38;
+      --accent:    #f5a623;
+      --accent2:   #e8374a;
+      --green:     #27c77a;
+      --text:      #e8eaf0;
+      --muted:     #6b7385;
+      --bat:       #f5a623;
+      --bowl:      #7c6cf0;
+      --ar:        #27c77a;
+      --wk:        #e8374a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--accent); }
+    .logo span { color: var(--text); }
+    .header-badge {
+      background: var(--accent); color: #000; font-size: 11px; font-weight: 600;
+      padding: 4px 10px; border-radius: 20px; letter-spacing: 1px;
+    }
+
+    /* ── LAYOUT ── */
+    .page { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 64px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+    }
+
+    .sidebar-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; color: var(--muted); margin-bottom: 1.25rem; }
+
+    .field-group { margin-bottom: 1.25rem; }
+    .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px; display: block; }
+    select {
+      width: 100%; background: var(--card); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7385' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+
+    /* Counter */
+    .xi-counter {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; text-align: center;
+    }
+    .xi-counter .count { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; color: var(--accent); }
+    .xi-counter .count-sub { font-size: 12px; color: var(--muted); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+    .xi-counter.complete .count { color: var(--green); }
+
+    /* Composition pills */
+    .composition { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
+    .comp-pill {
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .cp-BAT  { background: rgba(245,166,35,0.15);  color: var(--bat); }
+    .cp-BOWL { background: rgba(124,108,240,0.15); color: var(--bowl); }
+    .cp-AR   { background: rgba(39,199,122,0.15);  color: var(--ar); }
+    .cp-WK   { background: rgba(232,55,74,0.15);   color: var(--wk); }
+
+    /* Analyse button */
+    .btn-analyse {
+      width: 100%; padding: 13px; font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 2px;
+      background: var(--accent); color: #000; border: none;
+      border-radius: 10px; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    .btn-analyse:hover:not(:disabled) { background: #ffc14d; transform: translateY(-1px); }
+    .btn-analyse:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    /* ── MAIN ── */
+    main { padding: 1.5rem 2rem; overflow-y: auto; }
+
+    .squad-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .squad-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--muted); }
+    .clear-btn {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .clear-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* Player grid */
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .player-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px;
+      cursor: pointer; transition: border-color 0.15s, transform 0.1s, background 0.15s;
+      position: relative; user-select: none;
+    }
+    .player-card:hover { border-color: #3a4155; transform: translateY(-1px); }
+    .player-card.selected { background: #1a2535; border-color: var(--accent); }
+    .player-card.king-card { border-color: #9b59b6; }
+    .player-card.king-card.selected { border-color: var(--accent); }
+
+    .check-mark {
+      position: absolute; top: 8px; right: 10px;
+      width: 18px; height: 18px; background: var(--accent);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #000; font-weight: 700;
+    }
+    .p-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; padding-right: 20px; }
+    .p-role { margin-top: 5px; }
+    .role-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 7px;
+      border-radius: 4px; letter-spacing: 0.5px;
+    }
+    .rb-BAT  { background: rgba(245,166,35,0.15);  color: var(--bat); }
+    .rb-BOWL { background: rgba(124,108,240,0.15); color: var(--bowl); }
+    .rb-AR   { background: rgba(39,199,122,0.15);  color: var(--ar); }
+    .rb-WK   { background: rgba(232,55,74,0.15);   color: var(--wk); }
+    .p-stats { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+
+    /* ── FEEDBACK ── */
+    .feedback-section { margin-top: 0.5rem; }
+    .overall-banner {
+      border-radius: 10px; padding: 14px 18px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      letter-spacing: 1.5px; margin-bottom: 1rem;
+    }
+    .ob-strong   { background: rgba(39,199,122,0.12); color: var(--green); border: 1px solid rgba(39,199,122,0.3); }
+    .ob-moderate { background: rgba(245,166,35,0.12); color: var(--accent); border: 1px solid rgba(245,166,35,0.3); }
+    .ob-weak     { background: rgba(232,55,74,0.12);  color: var(--accent2); border: 1px solid rgba(232,55,74,0.3); }
+
+    .messages { display: flex; flex-direction: column; gap: 8px; }
+    .msg-card {
+      border-radius: 8px; padding: 12px 14px;
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; line-height: 1.5;
+    }
+    .msg-icon { font-size: 18px; flex-shrink: 0; }
+    .msg-title { font-weight: 600; margin-bottom: 2px; }
+    .msg-error   { background: rgba(232,55,74,0.10);  color: #f4a0a9; border: 1px solid rgba(232,55,74,0.2); }
+    .msg-warning { background: rgba(245,166,35,0.10); color: #f5c97a; border: 1px solid rgba(245,166,35,0.2); }
+    .msg-success { background: rgba(39,199,122,0.10); color: #6ee4ae; border: 1px solid rgba(39,199,122,0.2); }
+    .msg-info    { background: rgba(99,160,255,0.10); color: #8fc3ff; border: 1px solid rgba(99,160,255,0.2); }
+    .msg-fun     { background: rgba(155,89,182,0.12); color: #d4aaed; border: 1px solid rgba(155,89,182,0.3); }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 300px; color: var(--muted); text-align: center; gap: 12px;
+    }
+    .empty-icon { font-size: 48px; }
+    .empty-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; }
+    .empty-sub { font-size: 14px; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 2rem; color: var(--muted); }
+    .spinner {
+      display: inline-block; width: 20px; height: 20px;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      main { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">IPL <span>XI</span> Builder</div>
+  <div class="header-badge">2026 SEASON</div>
+</header>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Build Your XI</div>
+
+    <div class="field-group">
+      <label class="field-label" for="teamSelect">Select Team</label>
+      <select id="teamSelect" onchange="loadSquad()">
+        <option value="">— Choose a team —</option>
+        <option value="MI">Mumbai Indians</option>
+        <option value="CSK">Chennai Super Kings</option>
+        <option value="DC">Delhi Capitals</option>
+        <option value="PBKS">Punjab Kings</option>
+        <option value="KKR">Kolkata Knight Riders</option>
+        <option value="RCB">Royal Challengers Bengaluru</option>
+        <option value="SRH">Sunrisers Hyderabad</option>
+        <option value="RR">Rajasthan Royals</option>
+        <option value="GT">Gujarat Titans</option>
+        <option value="LSG">Lucknow Super Giants</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="stratSelect">Strategy</label>
+      <select id="stratSelect">
+        <option value="balanced">Balanced XI</option>
+        <option value="batting">Batting Heavy</option>
+        <option value="bowling">Bowling Heavy</option>
+        <option value="spin">Spin-Friendly Pitch</option>
+        <option value="pace">Pace-Friendly Pitch</option>
+      </select>
+    </div>
+
+    <div class="xi-counter" id="xiCounter">
+      <div class="count" id="countNum">0</div>
+      <div class="count-sub">of 11 selected</div>
+    </div>
+
+    <div class="composition" id="composition"></div>
+
+    <button class="btn-analyse" id="analyseBtn" onclick="analyseXI()" disabled>
+      Analyse XI →
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="mainArea">
+    <div class="empty-state">
+      <div class="empty-icon">🏏</div>
+      <div class="empty-title">Pick a team to get started</div>
+      <div class="empty-sub">Select a team from the sidebar, choose 11 players, and analyse your XI</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ── Config ──
+  const API = "https://ipl-bestxi.onrender.com/api";   // Change to your deployed backend URL when hosting
+
+  let selectedPlayers = new Set();
+  let currentSquad    = [];
+  let currentTeam     = "";
+
+  // ── Load squad from backend ──
+  async function loadSquad() {
+    currentTeam = document.getElementById("teamSelect").value;
+    selectedPlayers.clear();
+    currentSquad = [];
+    updateSidebar();
+
+    if (!currentTeam) {
+      document.getElementById("mainArea").innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🏏</div>
+          <div class="empty-title">Pick a team to get started</div>
+          <div class="empty-sub">Select a team from the sidebar, choose 11 players, and analyse your XI</div>
+        </div>`;
+      return;
+    }
+
+    document.getElementById("mainArea").innerHTML = `<div class="loading"><span class="spinner"></span> Loading squad...</div>`;
+
+    try {
+      const res   = await fetch(`${API}/squad/${currentTeam}`);
+      currentSquad = await res.json();
+      renderSquad();
+    } catch (e) {
+      document.getElementById("mainArea").innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-title">Couldn't connect to server</div>
+          <div class="empty-sub">Make sure the backend is running on port 5000</div>
+        </div>`;
+    }
+  }
+
+  // ── Render player cards ──
+  function renderSquad() {
+    const isRCB = currentTeam === "RCB";
+
+    const cardsHTML = currentSquad.map((p, i) => {
+      const sel     = selectedPlayers.has(i);
+      const isKing  = p.special === "king";
+      let extraClass = "";
+      if (sel)    extraClass += " selected";
+      if (isKing && !sel) extraClass += " king-card";
+
+      return `
+        <div class="player-card${extraClass}" onclick="togglePlayer(${i})">
+          ${sel ? '<div class="check-mark">✓</div>' : ""}
+          <div class="p-name">${p.name}</div>
+          <div class="p-role"><span class="role-badge rb-${p.role}">${roleFull(p.role)}</span></div>
+          <div class="p-stats">${p.stats}</div>
+        </div>`;
+    }).join("");
+
+    document.getElementById("mainArea").innerHTML = `
+      <div class="squad-header">
+        <div class="squad-title">Squad — tap to select</div>
+        <button class="clear-btn" onclick="clearSelection()">Clear all</button>
+      </div>
+      <div class="player-grid">${cardsHTML}</div>
+      <div class="feedback-section" id="feedbackSection"></div>`;
+  }
+
+  function roleFull(r) {
+    return { BAT:"Batter", BOWL:"Bowler", AR:"All-rounder", WK:"Wicketkeeper" }[r] || r;
+  }
+
+  // ── Toggle player ──
+  function togglePlayer(i) {
+    if (selectedPlayers.has(i))        selectedPlayers.delete(i);
+    else if (selectedPlayers.size < 11) selectedPlayers.add(i);
+    renderSquad();
+    updateSidebar();
+  }
+
+  function clearSelection() {
+    selectedPlayers.clear();
+    renderSquad();
+    updateSidebar();
+    document.getElementById("feedbackSection").innerHTML = "";
+  }
+
+  // ── Update sidebar ──
+  function updateSidebar() {
+    const count   = selectedPlayers.size;
+    const counter = document.getElementById("xiCounter");
+    document.getElementById("countNum").textContent = count;
+    counter.classList.toggle("complete", count === 11);
+    document.getElementById("analyseBtn").disabled = count !== 11;
+
+    const sel   = [...selectedPlayers].map(i => currentSquad[i]);
+    const roles = { BAT:0, BOWL:0, AR:0, WK:0 };
+    sel.forEach(p => roles[p.role]++);
+
+    document.getElementById("composition").innerHTML =
+      Object.entries(roles).filter(([,v]) => v > 0).map(([r, v]) =>
+        `<span class="comp-pill cp-${r}">${v} ${roleFull(r)}${v > 1 ? "s" : ""}</span>`
+      ).join("");
+  }
+
+  // ── Call backend to analyse ──
+  async function analyseXI() {
+    const strategy = document.getElementById("stratSelect").value;
+    const players  = [...selectedPlayers].map(i => currentSquad[i].name);
+    const fb       = document.getElementById("feedbackSection");
+    fb.innerHTML   = `<div class="loading"><span class="spinner"></span> Analysing your XI...</div>`;
+    fb.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    try {
+      const res  = await fetch(`${API}/analyse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ team: currentTeam, strategy, players })
+      });
+      const data = await res.json();
+      renderFeedback(data);
+    } catch (e) {
+      fb.innerHTML = `<div class="msg-card msg-error"><span class="msg-icon">⚠️</span><div><div class="msg-title">Server error</div>Could not reach the backend.</div></div>`;
+    }
+  }
+
+  // ── Render analysis feedback ──
+  function renderFeedback(data) {
+    const ob    = data.overall;
+    const obCls = ob.rating === "strong" ? "ob-strong" : ob.rating === "moderate" ? "ob-moderate" : "ob-weak";
+
+    const msgsHTML = data.messages.map(m => `
+      <div class="msg-card msg-${m.type}">
+        <span class="msg-icon">${m.icon}</span>
+        <div>
+          <div class="msg-title">${m.title}</div>
+          <div>${m.text}</div>
+        </div>
+      </div>`).join("");
+
+    document.getElementById("feedbackSection").innerHTML = `
+      <div class="overall-banner ${obCls}">${ob.text}</div>
+      <div class="messages">${msgsHTML}</div>`;
+  }
+</script>
+</body>
+</html>
